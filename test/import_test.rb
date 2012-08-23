@@ -19,6 +19,16 @@ describe "#import" do
     end
   end
 
+  describe "with non-default ActiveRecord models" do  
+    context "that have a non-standard primary key (that is no sequence)" do
+      it "should import models successfully" do
+        assert_difference "Widget.count", +3 do
+          Widget.import Build(3, :widgets)
+        end
+      end
+    end
+  end
+
   context "with :validation option" do
     let(:columns) { %w(title author_name) }
     let(:valid_values) { [[ "LDAP", "Jerry Carter"], ["Rails Recipes", "Chad Fowler"]] }
@@ -34,6 +44,12 @@ describe "#import" do
       it "should import invalid data" do
         assert_difference "Topic.count", +2 do
           result = Topic.import columns, invalid_values, :validate => false
+        end
+      end
+
+      it 'should raise a specific error if a column does not exist' do
+        assert_raises ActiveRecord::Import::MissingColumnError do
+          Topic.import ['foo'], [['bar']], :validate => false
         end
       end
     end
